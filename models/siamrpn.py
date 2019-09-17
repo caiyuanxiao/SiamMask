@@ -11,9 +11,9 @@ from torch.autograd import Variable
 from utils.anchors import Anchors
 
 
-class SiamRPN(nn.Module):
+class SiamRPN(nn.Module):                      #创建新的类时一般继承nn.module
     def __init__(self, anchors=None):
-        super(SiamRPN, self).__init__()
+        super(SiamRPN, self).__init__()          #第二三行为python继承类的基本操作
         self.anchors = anchors  # anchor_cfg
         self.anchor = Anchors(anchors)
         self.anchor_num = self.anchor.anchor_num
@@ -35,7 +35,7 @@ class SiamRPN(nn.Module):
 
     def rpn(self, template, search):
         pred_cls, pred_loc = self.rpn_model(template, search)
-        return pred_cls, pred_loc
+        return pred_cls, pred_loc              #cls表示classification，loc表示location
 
     def _add_rpn_loss(self, label_cls, label_loc, lable_loc_weight, rpn_pred_cls,
                       rpn_pred_loc):
@@ -45,9 +45,9 @@ class SiamRPN(nn.Module):
         :param rpn_pred_loc: [B, num_anchors * 4, h, w], output of rpn for localization.
         :return: loss of classification and localization, respectively.
         '''
-        rpn_loss_cls = select_cross_entropy_loss(rpn_pred_cls, label_cls)
+        rpn_loss_cls = select_cross_entropy_loss(rpn_pred_cls, label_cls)   #classification分支的loss函数使用交叉熵
 
-        rpn_loss_loc = weight_l1_loss(rpn_pred_loc, label_loc, lable_loc_weight)
+        rpn_loss_loc = weight_l1_loss(rpn_pred_loc, label_loc, lable_loc_weight)   #定位分支使用的损失函数不懂
 
         # classification accuracy, top1
         acc = torch.zeros(1)  # TODO
@@ -57,21 +57,21 @@ class SiamRPN(nn.Module):
         """
         run network
         """
-        template_feature = self.feature_extractor(template)
-        search_feature = self.feature_extractor(search)
-        rpn_pred_cls, rpn_pred_loc = self.rpn(template_feature, search_feature)
+        template_feature = self.feature_extractor(template)    #使用模板提取模板特征
+        search_feature = self.feature_extractor(search)        #使用搜索提取搜索特征
+        rpn_pred_cls, rpn_pred_loc = self.rpn(template_feature, search_feature)     #将两个特征图送入RPN得到两个分支的值
         if softmax:
-            rpn_pred_cls = self.softmax(rpn_pred_cls)
-        return rpn_pred_cls, rpn_pred_loc, template_feature, search_feature
+            rpn_pred_cls = self.softmax(rpn_pred_cls)       #其中classification分支用softmax输出分数
+        return rpn_pred_cls, rpn_pred_loc, template_feature, search_feature    #返回上述结果
 
-    def softmax(self, cls):
+    def softmax(self, cls):                 #定义softmax函数，输入为classification分支的输出
         b, a2, h, w = cls.size()
         cls = cls.view(b, 2, a2//2, h, w)
         cls = cls.permute(0, 2, 3, 4, 1).contiguous()
         cls = F.log_softmax(cls, dim=4)
         return cls
 
-    def forward(self, input):
+    def forward(self, input):         #定义前向传播的方法
         """
         :param input: dict of input with keys of:
                 'template': [b, 3, h1, w1], input template image.
