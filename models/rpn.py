@@ -3,15 +3,15 @@
 # Licensed under The MIT License
 # Written by Qiang Wang (wangqiang2015 at ia.ac.cn)
 # --------------------------------------------------------
-import torch.nn as nn          #jesiafjsafja   
-import torch.nn.functional as F
+import torch.nn as nn          
+import torch.nn.functional as F    
 
 
-class RPN(nn.Module):
+class RPN(nn.Module):  #新建一个网络一般是继承torch.nn.module
     def __init__(self):
-        super(RPN, self).__init__()
+        super(RPN, self).__init__()   #python类继承的基本操作
 
-    def forward(self, z_f, x_f):
+    def forward(self, z_f, x_f):    #定义前向传播的方法
         raise NotImplementedError
 
     def template(self, template):
@@ -31,9 +31,9 @@ class RPN(nn.Module):
 
 def conv2d_dw_group(x, kernel):
     batch, channel = kernel.shape[:2]
-    x = x.view(1, batch*channel, x.size(2), x.size(3))  # 1 * (b*c) * k * k
+    x = x.view(1, batch*channel, x.size(2), x.size(3))  # 1 * (b*c) * k * k    .view是一个tensor方法，改变tensor的size但元素的总量不变
     kernel = kernel.view(batch*channel, 1, kernel.size(2), kernel.size(3))  # (b*c) * 1 * H * W
-    out = F.conv2d(x, kernel, groups=batch*channel)
+    out = F.conv2d(x, kernel, groups=batch*channel)         #调用F的relu函数，F是nn.module.function
     out = out.view(batch, channel, out.size(2), out.size(3))
     return out
 
@@ -43,7 +43,7 @@ class DepthCorr(nn.Module):
         super(DepthCorr, self).__init__()
         # adjust layer for asymmetrical features
         self.conv_kernel = nn.Sequential(
-                nn.Conv2d(in_channels, hidden, kernel_size=kernel_size, bias=False),
+                nn.Conv2d(in_channels, hidden, kernel_size=kernel_size, bias=False), #调用了nn里面的二维卷积conv2d
                 nn.BatchNorm2d(hidden),
                 nn.ReLU(inplace=True),
                 )
